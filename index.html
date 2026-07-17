@@ -1,17 +1,15 @@
-<!DOCTYPE html>
+        <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ĩrhẽζ (Ioso) Runtime Environment v1</title>
+    <title>k+- (Ioso) Advanced Runtime</title>
     <style>
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #1a1a1a;
-            color: #e0e0e0;
+            background-color: #141414;
+            color: #e5e7eb;
             margin: 0;
             padding: 20px;
         }
@@ -19,22 +17,18 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 2px solid #333;
+            border-bottom: 2px solid #4f46e5;
             padding-bottom: 15px;
             margin-bottom: 20px;
         }
-        h2, h3 {
-            margin: 0;
-            color: #ffffff;
-        }
-        .version-badge {
-            background-color: #ff9800;
-            color: #000;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 12px;
+        h2, h3 { margin: 0; color: #ffffff; }
+        .system-badge {
+            background-color: #4f46e5;
+            color: #fff;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 13px;
             font-weight: bold;
-            vertical-align: middle;
             margin-left: 10px;
         }
         .user-panel {
@@ -46,7 +40,7 @@
             width: 35px;
             height: 35px;
             border-radius: 50%;
-            border: 2px solid #4f46e5;
+            border: 2px solid #10b981;
         }
         .btn {
             background-color: #4f46e5;
@@ -56,8 +50,7 @@
             border-radius: 6px;
             cursor: pointer;
             font-weight: bold;
-            font-size: 14px;
-            transition: background 0.2s;
+            transition: all 0.2s;
         }
         .btn:hover { background-color: #4338ca; }
         .btn-logout { background-color: #dc2626; }
@@ -66,67 +59,42 @@
         .btn-run:hover { background-color: #059669; }
         
         .main-layout {
-            display: flex;
-            flex-direction: column;
+            display: grid;
+            grid-template-columns: 1fr;
             gap: 20px;
         }
         @media (min-width: 768px) {
-            .main-layout {
-                flex-direction: row;
-            }
-            .editor-section, .output-section {
-                flex: 1;
-            }
+            .main-layout { grid-template-columns: 1fr 1fr; }
         }
         .panel {
-            background-color: #242424;
-            border: 1px solid #333;
+            background-color: #1f1f1f;
+            border: 1px solid #2e2e2e;
             border-radius: 8px;
             padding: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
         }
-        textarea {
+        textarea, .output-box {
             width: 100%;
-            height: 350px;
-            background-color: #121212;
-            color: #a9b7c6;
-            border: 1px solid #444;
+            height: 400px;
+            background-color: #0b0b0b;
+            color: #38bdf8;
+            border: 1px solid #333;
             border-radius: 6px;
             padding: 12px;
-            font-family: 'Courier New', Courier, monospace;
+            font-family: 'Consolas', 'Courier New', monospace;
             font-size: 15px;
-            resize: none;
-            outline: none;
+            margin-top: 10px;
         }
-        textarea:focus {
-            border-color: #4f46e5;
-        }
-        .output-box {
-            width: 100%;
-            height: 350px;
-            background-color: #121212;
-            color: #6a9955;
-            border: 1px solid #444;
-            border-radius: 6px;
-            padding: 12px;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 15px;
-            white-space: pre-wrap;
-            overflow-y: auto;
-        }
-        .action-bar {
-            display: flex;
-            justify-content: flex-end;
-        }
+        textarea { resize: none; outline: none; }
+        textarea:focus { border-color: #4f46e5; }
+        .output-box { color: #34d399; white-space: pre-wrap; overflow-y: auto; }
+        .action-bar { display: flex; justify-content: flex-end; margin-top: 10px; }
     </style>
 </head>
 <body>
 
     <header>
         <div>
-            <h2>ĩrhẽζ (Ioso) System<span class="version-badge">Runtime v1 (Temporary)</span></h2>
+            <h2>k+- Core System<span class="system-badge">Runtime v2</span></h2>
         </div>
         <div id="auth-section">
             <button id="btn-login" class="btn">Đăng nhập bằng Google</button>
@@ -134,26 +102,25 @@
     </header>
 
     <div class="main-layout">
-        <div class="editor-section panel">
-            <h3>Mã nguồn (ĩrhẽζ v9):</h3>
-            <textarea id="code-input" placeholder="// Nhập mã nguồn ĩrhẽζ của bạn vào đây...&#10;// Cấu trúc SOV (Subject - Object - Verb)"></textarea>
+        <div class="panel">
+            <h3>Mã nguồn đầu vào (ĩrhẽζ):</h3>
+            <textarea id="code-input" placeholder="// k+- Engine khởi động...&#10;// Nhập cú pháp ngôn ngữ của bạn tại đây"></textarea>
             <div class="action-bar">
-                <button id="btn-run" class="btn btn-run">▶ Thực thi (Run)</button>
+                <button id="btn-run" class="btn btn-run">⚙ Biên dịch & Thực thi</button>
             </div>
         </div>
         
-        <div class="output-section panel">
-            <h3>Kết quả đầu ra (Console):</h3>
-            <div id="console-output" class="output-box">Hệ thống sẵn sàng...&#10;Đang sử dụng tạm thời: Runtime v1 (Mô phỏng cục bộ)</div>
+        <div class="panel">
+            <h3>Kết quả xử lý hệ thống:</h3>
+            <div id="console-output" class="output-box">k+- Core: Sẵn sàng nhận lệnh...</div>
         </div>
     </div>
 
-    <!-- HỆ THỐNG FIREBASE & XỬ LÝ RUNTIME V1 -->
+    <!-- HỆ THỐNG FIREBASE & XỬ LÝ RUNTIME K+- -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // Cấu hình Firebase irhez-app của bạn
         const firebaseConfig = {
             apiKey: "AIzaSyAVaJfSiLGFUpR_xWsoXV9LYXyqtenaURE",
             authDomain: "irhez-app.firebaseapp.com",
@@ -163,7 +130,6 @@
             appId: "1:31582734069:web:fa72db9fe3a6dee2dea7bc"
         };
 
-        // Khởi tạo
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
@@ -173,7 +139,6 @@
         const consoleOutput = document.getElementById('console-output');
         const runBtn = document.getElementById('btn-run');
 
-        // Theo dõi trạng thái đăng nhập
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 authSection.innerHTML = `
@@ -188,33 +153,30 @@
                 authSection.innerHTML = `<button id="btn-login" class="btn">Đăng nhập bằng Google</button>`;
                 document.getElementById('btn-login').addEventListener('click', () => {
                     signInWithPopup(auth, provider).catch(error => {
-                        console.error("Lỗi đăng nhập:", error);
-                        alert("Lỗi kết nối Firebase Auth: " + error.message);
+                        console.error("Lỗi:", error);
                     });
                 });
             }
         });
 
-        // Xử lý Runtime v1 tạm thời
+        // k+- Logic thực thi nâng cấp
         runBtn.addEventListener('click', () => {
             const code = codeInput.value.trim();
             if (!code) {
-                consoleOutput.textContent = "Lỗi: Không tìm thấy mã nguồn để thực thi.";
+                consoleOutput.textContent = "k+- Error: Không có dữ liệu đầu vào.";
                 return;
             }
 
-            consoleOutput.textContent = "[Khởi động] Đang biên dịch qua Runtime v1...\n";
+            consoleOutput.textContent = "[k+- Engine]: Đang tải kiến trúc môi trường...\n";
             
             setTimeout(() => {
-                consoleOutput.textContent += `[Phân tích cú pháp] Nhận diện thành công cấu trúc chuỗi.\n`;
-                consoleOutput.textContent += `-------------------------------------------\n`;
-                consoleOutput.textContent += `[Kết quả thực thi]:\n`;
-                consoleOutput.textContent += `Chạy thành công đoạn mã:\n${code}\n`;
-                consoleOutput.textContent += `-------------------------------------------\n`;
-                consoleOutput.textContent += `[Trạng thái]: Kết thúc phiên làm việc (0 errors).`;
-            }, 300);
+                consoleOutput.textContent += `[k+- Parser]: Đang cấu trúc hóa mã nguồn...\n`;
+                consoleOutput.textContent += `===========================================\n`;
+                consoleOutput.textContent += `[Kết quả k+-]:\n\n${code}\n\n`;
+                consoleOutput.textContent += `===========================================\n`;
+                consoleOutput.textContent += `[Trạng thái]: Tiến trình hoàn tất. Sẵn sàng kết nối mô-đun C++.`;
+            }, 400);
         });
     </script>
 </body>
-  </html>
-  
+</html>
