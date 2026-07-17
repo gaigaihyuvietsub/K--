@@ -77,7 +77,6 @@
             gap: 10px;
         }
         
-        /* Vùng Settings */
         .settings-bar {
             display: flex;
             flex-wrap: wrap;
@@ -116,7 +115,6 @@
         .output-box { color: #34d399; white-space: pre-wrap; overflow-y: auto; }
         .action-bar { display: flex; justify-content: flex-end; margin-top: 5px; }
 
-        /* Matrix Theme Overrides */
         body.matrix-theme { background-color: #000000; color: #00ff00; }
         body.matrix-theme .panel { background-color: #050505; border-color: #00ff00; }
         body.matrix-theme textarea { color: #00ff00; border-color: #005500; background-color: #000; }
@@ -132,7 +130,7 @@
             <h2>k+- System<span class="system-badge">Runtime v4</span></h2>
         </div>
         <div id="auth-section">
-            <button id="btn-login" class="btn">Đăng nhập bằng Google</button>
+            <!-- Thông tin user sẽ render tự động ở đây -->
         </div>
     </header>
 
@@ -140,7 +138,6 @@
         <div class="panel">
             <h3>Mã nguồn k+- :</h3>
             
-            <!-- BẢNG CÀI ĐẶT (SETTINGS) -->
             <div class="settings-bar">
                 <label>
                     Kích thước chữ:
@@ -174,7 +171,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAVaJfSiLGFUpR_xWsoXV9LYXyqtenaURE",
@@ -187,18 +184,32 @@
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        const provider = new GoogleAuthProvider();
 
         const authSection = document.getElementById('auth-section');
         const codeInput = document.getElementById('code-input');
         const consoleOutput = document.getElementById('console-output');
         const runBtn = document.getElementById('btn-run');
-        
-        // Phần tử điều khiển Settings
         const settingFontSize = document.getElementById('setting-font-size');
         const settingTheme = document.getElementById('setting-theme');
 
-        // Logic xử lý cấu hình Settings nhanh
+        // BẢO VỆ TRANG CODE: Nếu chưa đăng nhập, đá ngay về login.html
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                authSection.innerHTML = `
+                    <div class="user-panel">
+                        <img src="${user.photoURL}" alt="Avatar">
+                        <span>${user.displayName}</span>
+                        <button id="btn-logout" class="btn btn-logout">Đăng xuất</button>
+                    </div>
+                `;
+                document.getElementById('btn-logout').addEventListener('click', () => {
+                    signOut(auth).then(() => { window.location.href = "login.html"; });
+                });
+            } else {
+                window.location.href = "login.html";
+            }
+        });
+
         settingFontSize.addEventListener('change', () => {
             const size = settingFontSize.value;
             codeInput.style.fontSize = size;
@@ -213,43 +224,18 @@
             }
         });
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                authSection.innerHTML = `
-                    <div class="user-panel">
-                        <img src="${user.photoURL}" alt="Avatar">
-                        <span>${user.displayName}</span>
-                        <button id="btn-logout" class="btn btn-logout">Đăng xuất</button>
-                    </div>
-                `;
-                document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
-            } else {
-                authSection.innerHTML = `<button id="btn-login" class="btn">Đăng nhập bằng Google</button>`;
-                document.getElementById('btn-login').addEventListener('click', () => {
-                    signInWithPopup(auth, provider).catch(error => {
-                        console.error("Lỗi auth:", error);
-                    });
-                });
-            }
-        });
-
-        // Bộ nhớ lưu trữ biến toàn cục
         let variables = {};
 
-        // 1. LEXER: B bóc tách mã nguồn, bắt lỗi chuỗi chưa đóng
         function tokenize(code, lineNum) {
             const tokens = [];
             let i = 0;
             while (i < code.length) {
                 let char = code[i];
-
                 if (/\s/.test(char)) { i++; continue; }
-
                 if (char === '/' && code[i+1] === '/') {
                     while (i < code.length && code[i] !== '\n') i++;
                     continue;
                 }
-
                 if (char === '"') {
                     let value = "";
                     i++; 
@@ -263,29 +249,19 @@
                         value += code[i];
                         i++;
                     }
-                    if (!closed) {
-                        throw new Error(`Syntax Error (Dòng ${lineNum}): Chuỗi ký tự không được đóng ngoặc kép (Unterminated String).`);
-                    }
+                    if (!closed) throw new Error(`Syntax Error (Dòng ${lineNum}): Chuỗi ký tự không được đóng ngoặc kép.`);
                     tokens.push({ type: 'STRING', value: value });
                     continue;
                 }
-
                 if (/[0-9]/.test(char)) {
                     let value = "";
-                    while (i < code.length && /[0-9.]/.test(code[i])) {
-                        value += code[i];
-                        i++;
-                    }
+                    while (i < code.length && /[0-9.]/.test(code[i])) { value += code[i]; i++; }
                     tokens.push({ type: 'NUMBER', value: Number(value) });
                     continue;
                 }
-
                 if (/[a-zA-Z_]/.test(char)) {
                     let value = "";
-                    while (i < code.length && /[a-zA-Z0-9_]/.test(code[i])) {
-                        value += code[i];
-                        i++;
-                    }
+                    while (i < code.length && /[a-zA-Z0-9_]/.test(code[i])) { value += code[i]; i++; }
                     if (value === 'var' || value === 'kyac' || value === 'ceyk' || value === 'hlep') {
                         tokens.push({ type: 'KEYWORD', value: value });
                     } else if (value === 'true' || value === 'false') {
@@ -297,7 +273,6 @@
                     }
                     continue;
                 }
-
                 if (['=', '+', '-', '*', '/', '!', '>', '<'].includes(char)) {
                     let nextChar = code[i+1];
                     if ((char === '=' && nextChar === '=') || (char === '!' && nextChar === '=')) {
@@ -309,51 +284,36 @@
                     }
                     continue;
                 }
-
                 if (char === '(' || char === ')') {
                     tokens.push({ type: 'PAREN', value: char });
                     i++;
                     continue;
                 }
-
                 throw new Error(`Syntax Error (Dòng ${lineNum}): Ký tự lạ không hợp lệ "${char}"`);
             }
             return tokens;
         }
 
-        // 2. EVALUATOR: Xử lý Stack toán học, các phép toán logic so sánh và null
         function evaluateLowLevelExpression(tokens, lineNum) {
             const outputQueue = [];
             const operatorStack = [];
-            
-            const precedence = {
-                '==': 1, '!=': 1, '>': 1, '<': 1,
-                '+': 2, '-': 2,
-                '*': 3, '/': 3
-            };
+            const precedence = { '==': 1, '!=': 1, '>': 1, '<': 1, '+': 2, '-': 2, '*': 3, '/': 3 };
 
             for (let i = 0; i < tokens.length; i++) {
                 let token = tokens[i];
-
                 if (token.type === 'NUMBER' || token.type === 'BOOLEAN' || token.type === 'NULL') {
                     outputQueue.push(token);
                 } else if (token.type === 'IDENTIFIER') {
                     if (variables.hasOwnProperty(token.value)) {
                         let targetVal = variables[token.value];
-                        if (targetVal === null) {
-                            outputQueue.push({ type: 'NULL', value: null });
-                        } else if (typeof targetVal === 'boolean') {
-                            outputQueue.push({ type: 'BOOLEAN', value: targetVal });
-                        } else {
-                            outputQueue.push({ type: 'NUMBER', value: targetVal });
-                        }
+                        if (targetVal === null) outputQueue.push({ type: 'NULL', value: null });
+                        else if (typeof targetVal === 'boolean') outputQueue.push({ type: 'BOOLEAN', value: targetVal });
+                        else outputQueue.push({ type: 'NUMBER', value: targetVal });
                     } else {
                         throw new Error(`Name Error (Dòng ${lineNum}): Biến "${token.value}" không tồn tại.`);
                     }
                 } else if (token.type === 'OPERATOR') {
-                    while (operatorStack.length > 0 && 
-                           operatorStack[operatorStack.length - 1].type === 'OPERATOR' && 
-                           precedence[operatorStack[operatorStack.length - 1].value] >= precedence[token.value]) {
+                    while (operatorStack.length > 0 && operatorStack[operatorStack.length - 1].type === 'OPERATOR' && precedence[operatorStack[operatorStack.length - 1].value] >= precedence[token.value]) {
                         outputQueue.push(operatorStack.pop());
                     }
                     operatorStack.push(token);
@@ -370,63 +330,43 @@
 
             while (operatorStack.length > 0) {
                 let op = operatorStack.pop();
-                if (op.type === 'PAREN') throw new Error(`Syntax Error (Dòng ${lineNum}): Mất cân bằng dấu đóng mở ngoặc.`);
+                if (op.type === 'PAREN') throw new Error(`Syntax Error (Dòng ${lineNum}): Mất cân bằng dấu ngoặc.`);
                 outputQueue.push(op);
             }
 
             const evaluationStack = [];
             for (let i = 0; i < outputQueue.length; i++) {
                 let token = outputQueue[i];
-
                 if (token.type === 'NUMBER' || token.type === 'BOOLEAN' || token.type === 'NULL') {
                     evaluationStack.push(token.value);
                 } else if (token.type === 'OPERATOR') {
-                    if (evaluationStack.length < 2) throw new Error(`Syntax Error (Dòng ${lineNum}): Thiếu toán hạng toán tử.`);
+                    if (evaluationStack.length < 2) throw new Error(`Syntax Error (Dòng ${lineNum}): Thiếu toán hạng.`);
                     let b = evaluationStack.pop();
                     let a = evaluationStack.pop();
 
-                    if (token.value === '==') {
-                        evaluationStack.push(a === b);
-                        continue;
-                    }
-                    if (token.value === '!=') {
-                        evaluationStack.push(a !== b);
-                        continue;
-                    }
-
-                    if (a === null || b === null) {
-                        throw new Error(`Runtime Error (Dòng ${lineNum}): Không thể tính toán "${token.value}" trên đối tượng null.`);
-                    }
+                    if (token.value === '==') { evaluationStack.push(a === b); continue; }
+                    if (token.value === '!=') { evaluationStack.push(a !== b); continue; }
+                    if (a === null || b === null) throw new Error(`Runtime Error (Dòng ${lineNum}): Không thể tính toán trên đối tượng null.`);
 
                     switch (token.value) {
                         case '+': evaluationStack.push(a + b); break;
                         case '-': evaluationStack.push(a - b); break;
                         case '*': evaluationStack.push(a * b); break;
-                        case '/': 
-                            if (b === 0) throw new Error(`Runtime Error (Dòng ${lineNum}): Lỗi chia cho số 0 (Division by zero).`);
-                            evaluationStack.push(a / b); 
-                            break;
-                        case '>':  evaluationStack.push(a > b); break;
-                        case '<':  evaluationStack.push(a < b); break;
+                        case '/': if (b === 0) throw new Error(`Runtime Error (Dòng ${lineNum}): Lỗi chia cho số 0.`); evaluationStack.push(a / b); break;
+                        case '>': evaluationStack.push(a > b); break;
+                        case '<': evaluationStack.push(a < b); break;
                     }
                 }
             }
-
-            if (evaluationStack.length !== 1) throw new Error(`Syntax Error (Dòng ${lineNum}): Biểu thức tính toán bị lỗi.`);
+            if (evaluationStack.length !== 1) throw new Error(`Syntax Error (Dòng ${lineNum}): Biểu thức lỗi.`);
             return evaluationStack[0];
         }
 
-        // 3. RUNTIME CORE LOOP
         runBtn.addEventListener('click', () => {
             const code = codeInput.value.trim();
-            if (!code) {
-                consoleOutput.textContent = "k+- Error: Không tìm thấy mã nguồn.";
-                return;
-            }
-
+            if (!code) { consoleOutput.textContent = "k+- Error: Không tìm thấy mã nguồn."; return; }
             consoleOutput.textContent = "[k+- Engine v4] Bắt đầu thực thi mã nguồn...\n";
             consoleOutput.textContent += `-------------------------------------------\n`;
-
             variables = {}; 
             const lines = code.split('\n');
             let hasError = false;
@@ -439,30 +379,17 @@
                     const tokens = tokenize(lineText, i + 1);
                     if (tokens.length === 0) continue;
 
-                    // LỆNH ĐẶC BIỆT CHÍNH THỨC: hlep
                     if (tokens[0].type === 'KEYWORD' && tokens[0].value === 'hlep') {
-                        consoleOutput.textContent += `=== HƯỚNG DẪN CÚ PHÁP k+- ===\n`;
-                        consoleOutput.textContent += `1. Khai báo biến: var [tên] = [giá trị / biểu thức]\n`;
-                        consoleOutput.textContent += `2. Xuất dữ liệu:  kyac ceyk [biến / chuỗi / biểu thức]\n`;
-                        consoleOutput.textContent += `3. Hệ thống cứu hộ: hlep\n`;
-                        consoleOutput.textContent += `4. Kiểu dữ liệu hỗ trợ: Số, Chuỗi, true, false, null\n`;
-                        consoleOutput.textContent += `5. Toán tử: +, -, *, /, ==, !=, >, <, ( )\n`;
-                        consoleOutput.textContent += `=====================================\n`;
+                        consoleOutput.textContent += `=== HƯỚNG DẪN CÚ PHÁP k+- ===\n1. Khai báo biến: var [tên] = [giá trị / biểu thức]\n2. Xuất dữ liệu:  kyac ceyk [biến / chuỗi / biểu thức]\n3. Hệ thống cứu hộ: hlep\n4. Kiểu dữ liệu hỗ trợ: Số, Chuỗi, true, false, null\n5. Toán tử: +, -, *, /, ==, !=, >, <, ( )\n=====================================\n`;
                         continue;
                     }
 
-                    if (tokens[0].type === 'IDENTIFIER') {
-                        if (tokens[0].value === 'kyca') throw new Error(`Syntax Error (Dòng ${i+1}): Không tìm thấy lệnh "kyca". Có phải ý bạn là "kyac"?`);
-                    }
+                    if (tokens[0].type === 'IDENTIFIER' && tokens[0].value === 'kyca') throw new Error(`Syntax Error (Dòng ${i+1}): Không tìm thấy lệnh "kyca". Có phải ý bạn là "kyac"?`);
 
                     if (tokens[0].type === 'KEYWORD' && tokens[0].value === 'kyac') {
-                        if (!tokens[1] || tokens[1].value !== 'ceyk') {
-                            throw new Error(`Syntax Error (Dòng ${i+1}): Thiếu thành phần điều hướng "ceyk" đứng sau "kyac".`);
-                        }
-                        
+                        if (!tokens[1] || tokens[1].value !== 'ceyk') throw new Error(`Syntax Error (Dòng ${i+1}): Thiếu thành phần điều hướng "ceyk" đứng sau "kyac".`);
                         let remaining = tokens.slice(2);
-                        if (remaining.length === 0) throw new Error(`Syntax Error (Dòng ${i+1}): Trống dữ liệu đầu vào cho lệnh xuất.`);
-
+                        if (remaining.length === 0) throw new Error(`Syntax Error (Dòng ${i+1}): Trống dữ liệu đầu vào.`);
                         if (remaining.length === 1 && remaining[0].type === 'STRING') {
                             consoleOutput.textContent += remaining[0].value + "\n";
                         } else {
@@ -474,4 +401,29 @@
 
                     if (tokens[0].type === 'KEYWORD' && tokens[0].value === 'var') {
                         let varNameToken = tokens[1];
-                        if (!varNameToken || varNameT
+                        if (!varNameToken || varNameToken.type !== 'IDENTIFIER') throw new Error(`Syntax Error (Dòng ${i+1}): Yêu cầu tên biến hợp lệ sau 'var'.`);
+                        if (!tokens[2] || tokens[2].value !== '=') throw new Error(`Syntax Error (Dòng ${i+1}): Thiếu toán tử gán '='.`);
+                        let exprTokens = tokens.slice(3);
+                        if (exprTokens.length === 0) throw new Error(`Syntax Error (Dòng ${i+1}): Biến trống giá trị.`);
+                        if (exprTokens.length === 1 && exprTokens[0].type === 'STRING') {
+                            variables[varNameToken.value] = exprTokens[0].value;
+                        } else {
+                            variables[varNameToken.value] = evaluateLowLevelExpression(exprTokens, i + 1);
+                        }
+                        continue;
+                    }
+                    throw new Error(`Syntax Error (Dòng ${i+1}): Cấu trúc mã nguồn không xác định.`);
+                } catch (err) {
+                    consoleOutput.textContent += `❌ ${err.message}\n`;
+                    hasError = true;
+                    break;
+                }
+            }
+            if (!hasError) {
+                consoleOutput.textContent += `-------------------------------------------\n[Trạng thái]: Tiến trình Core hoàn tất thành công.`;
+            }
+        });
+    </script>
+</body>
+    </html>
+                            
