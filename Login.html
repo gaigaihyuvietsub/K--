@@ -54,7 +54,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getAuth, signInWithRedirect, GoogleAuthProvider, getRedirectResult, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAVaJfSiLGFUpR_xWsoXV9LYXyqtenaURE",
@@ -72,25 +72,28 @@
         const loginBtn = document.getElementById('btn-login');
         const statusMsg = document.getElementById('status-msg');
 
-        // Nếu đã đăng nhập sẵn rồi, chuyển thẳng sang trang code index.html
+        // Xử lý kết quả sau khi chuyển hướng đăng nhập quay trở về
+        getRedirectResult(auth).then((result) => {
+            if (result?.user) {
+                statusMsg.textContent = "Đăng nhập thành công! Đang chuyển hướng...";
+                window.location.href = "index.html";
+            }
+        }).catch((error) => {
+            statusMsg.style.color = "#dc2626";
+            statusMsg.textContent = "Lỗi xác thực: " + error.message;
+        });
+
+        // Kiểm tra trạng thái đăng nhập chủ động
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                statusMsg.textContent = "Xác thực thành công! Đang chuyển hướng...";
-                setTimeout(() => {
-                    window.location.href = "index.html";
-                }, 1000);
+                window.location.href = "index.html";
             }
         });
 
         loginBtn.addEventListener('click', () => {
-            statusMsg.textContent = "Đang kết nối tới Google...";
-            signInWithPopup(auth, provider).catch(error => {
-                statusMsg.style.color = "#dc2626";
-                statusMsg.textContent = "Lỗi đăng nhập: " + error.message;
-                console.error(error);
-            });
+            statusMsg.textContent = "Đang chuyển hướng tới Google...";
+            signInWithRedirect(auth, provider);
         });
     </script>
 </body>
-          </html>
-          
+</html>
