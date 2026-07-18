@@ -3,51 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>k+- System Login</title>
+    <title>Universe Simulator - Login</title>
     <style>
+        * { box-sizing: border-box; }
         body {
-            font-family: 'Segoe UI', sans-serif;
-            background-color: #141414;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0b0b0e;
             color: #e5e7eb;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
+            overflow: hidden;
+        }
+        /* Hiệu ứng nền vũ trụ mờ ảo */
+        .space-bg {
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background-image: radial-gradient(circle, #1e1b4b 1px, transparent 1px), radial-gradient(circle, #311042 1px, transparent 1px);
+            background-size: 40px 40px, 60px 60px;
+            background-position: 0 0, 20px 20px;
+            opacity: 0.3;
+            animation: spaceMove 100s linear infinite;
+            z-index: 1;
+        }
+        @keyframes spaceMove {
+            from { transform: translate(0, 0); }
+            to { transform: translate(-50%, -50%); }
         }
         .login-card {
-            background-color: #1f1f1f;
-            border: 1px solid #2e2e2e;
+            background-color: rgba(23, 23, 28, 0.85);
+            border: 1px solid #3b0764;
             padding: 40px;
-            border-radius: 12px;
+            border-radius: 16px;
             text-align: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            max-width: 400px;
+            box-shadow: 0 0 30px rgba(79, 70, 229, 0.2);
+            max-width: 420px;
             width: 100%;
+            backdrop-filter: blur(8px);
+            z-index: 10;
         }
-        h1 { margin-bottom: 10px; color: #fff; font-size: 28px; }
-        p { color: #9ca3af; margin-bottom: 30px; font-size: 14px; }
+        h1 { 
+            margin: 0 0 10px 0; 
+            color: #ffffff; 
+            font-size: 26px; 
+            letter-spacing: 1px;
+            background: linear-gradient(to right, #a855f7, #6366f1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        p { color: #9ca3af; margin: 0 0 30px 0; font-size: 14px; }
         .btn-google {
-            background-color: #4f46e5;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
             color: white;
             border: none;
-            padding: 12px 24px;
-            border-radius: 6px;
+            padding: 14px 24px;
+            border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
-            font-size: 16px;
-            transition: background 0.2s;
+            font-size: 15px;
+            transition: all 0.3s ease;
             width: 100%;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
         }
-        .btn-google:hover { background-color: #4338ca; }
-        .status { margin-top: 15px; color: #10b981; font-size: 14px; }
+        .btn-google:hover { 
+            background: linear-gradient(135deg, #4338ca, #6d28d9);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(79, 70, 229, 0.4);
+        }
+        .btn-google:active { transform: translateY(0); }
+        .status { 
+            margin-top: 20px; 
+            color: #10b981; 
+            font-size: 14px; 
+            font-family: monospace;
+            min-height: 20px;
+        }
     </style>
 </head>
 <body>
 
+    <div class="space-bg"></div>
+
     <div class="login-card">
-        <h1>k+- Core System</h1>
-        <p>Vui lòng xác thực tài khoản để truy cập Runtime v4</p>
+        <h1>Vũ Trụ Vật Lý v1.0</h1>
+        <p>Khởi tạo điểm kỳ dị hành trình mô phỏng</p>
         <button id="btn-login" class="btn-google">Đăng nhập bằng Google</button>
         <div id="status-msg" class="status"></div>
     </div>
@@ -72,26 +114,28 @@
         const loginBtn = document.getElementById('btn-login');
         const statusMsg = document.getElementById('status-msg');
 
-        // Xử lý kết quả sau khi chuyển hướng đăng nhập quay trở về
+        // Bẫy kết quả Redirect sau khi Google trả về dữ liệu thành công
         getRedirectResult(auth).then((result) => {
             if (result?.user) {
-                statusMsg.textContent = "Đăng nhập thành công! Đang chuyển hướng...";
+                statusMsg.textContent = "> Hệ thống xác thực... Đang nạp Vũ trụ...";
                 window.location.href = "index.html";
             }
         }).catch((error) => {
-            statusMsg.style.color = "#dc2626";
-            statusMsg.textContent = "Lỗi xác thực: " + error.message;
+            statusMsg.style.color = "#ef4444";
+            statusMsg.textContent = "❌ Lỗi: " + error.message;
+            console.error(error);
         });
 
-        // Kiểm tra trạng thái đăng nhập chủ động
+        // Kiểm tra chủ động xem phiên trước đã đăng nhập chưa
         onAuthStateChanged(auth, (user) => {
             if (user) {
+                statusMsg.textContent = "> Phiên làm việc hợp lệ. Đang chuyển hướng...";
                 window.location.href = "index.html";
             }
         });
 
         loginBtn.addEventListener('click', () => {
-            statusMsg.textContent = "Đang chuyển hướng tới Google...";
+            statusMsg.textContent = "> Đang chuyển hướng cổng kết nối Google...";
             signInWithRedirect(auth, provider);
         });
     </script>
