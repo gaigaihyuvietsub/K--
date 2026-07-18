@@ -47,16 +47,19 @@
             background-color: #4f46e5;
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 8px 16px;
             border-radius: 6px;
             cursor: pointer;
             font-weight: bold;
             transition: all 0.2s;
+            font-size: 13px;
         }
         .btn:hover { background-color: #4338ca; }
         .btn-logout { background-color: #dc2626; }
         .btn-logout:hover { background-color: #b91c1c; }
-        .btn-run { background-color: #10b981; }
+        .btn-danger { background-color: #b91c1c; color: white; }
+        .btn-danger:hover { background-color: #991b1b; }
+        .btn-run { background-color: #10b981; padding: 10px 20px; font-size: 15px; }
         .btn-run:hover { background-color: #059669; }
         
         .main-layout {
@@ -77,30 +80,43 @@
             gap: 10px;
         }
         
-        .settings-bar {
+        /* VÙNG CONFIG & ACCOUNT SETTINGS */
+        .settings-container {
+            background-color: #1a1a1a;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #2d2d2d;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .settings-row {
             display: flex;
             flex-wrap: wrap;
             gap: 15px;
-            background-color: #1a1a1a;
-            padding: 10px;
-            border-radius: 6px;
-            border: 1px solid #2d2d2d;
             font-size: 14px;
             align-items: center;
         }
-        .settings-bar select {
+        .settings-row select, .settings-row input {
             background-color: #2a2a2a;
             color: #fff;
             border: 1px solid #444;
             padding: 5px 10px;
             border-radius: 4px;
             outline: none;
-            cursor: pointer;
+        }
+        .settings-row input { width: 180px; font-size: 12px; }
+        .acc-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            border-top: 1px dashed #333;
+            padding-top: 10px;
         }
 
         textarea, .output-box {
             width: 100%;
-            height: 380px;
+            height: 340px;
             background-color: #0b0b0b;
             color: #38bdf8;
             border: 1px solid #333;
@@ -115,12 +131,14 @@
         .output-box { color: #34d399; white-space: pre-wrap; overflow-y: auto; }
         .action-bar { display: flex; justify-content: flex-end; margin-top: 5px; }
 
+        /* Matrix Theme */
         body.matrix-theme { background-color: #000000; color: #00ff00; }
         body.matrix-theme .panel { background-color: #050505; border-color: #00ff00; }
         body.matrix-theme textarea { color: #00ff00; border-color: #005500; background-color: #000; }
         body.matrix-theme .output-box { color: #00ff00; border-color: #005500; background-color: #000; }
         body.matrix-theme h2, body.matrix-theme h3 { color: #00ff00; }
-        body.matrix-theme .settings-bar { background-color: #0a0a0a; border-color: #00ff00; }
+        body.matrix-theme .settings-container { background-color: #0a0a0a; border-color: #00ff00; }
+        body.matrix-theme .settings-row select, body.matrix-theme .settings-row input { border-color: #00ff00; background-color: #000; color: #00ff00; }
     </style>
 </head>
 <body>
@@ -129,32 +147,45 @@
         <div>
             <h2>k+- System<span class="system-badge">Runtime v4</span></h2>
         </div>
-        <div id="auth-section">
-            <!-- Thông tin user sẽ render tự động ở đây -->
-        </div>
+        <div id="auth-section"></div>
     </header>
 
     <div class="main-layout">
         <div class="panel">
-            <h3>Mã nguồn k+- :</h3>
+            <h3>Mã nguồn k+- & Cấu hình:</h3>
             
-            <div class="settings-bar">
-                <label>
-                    Kích thước chữ:
-                    <select id="setting-font-size">
-                        <option value="13px">Nhỏ</option>
-                        <option value="15px" selected>Vừa</option>
-                        <option value="18px">Lớn</option>
-                        <option value="22px">Rất lớn</option>
-                    </select>
-                </label>
-                <label>
-                    Giao diện:
-                    <select id="setting-theme">
-                        <option value="dark" selected>Mặc định (Tối)</option>
-                        <option value="matrix">Ma trận (Matrix)</option>
-                    </select>
-                </label>
+            <!-- HỆ THỐNG CONFIG & ACCOUNT SETTINGS ĐA NĂNG -->
+            <div class="settings-container">
+                <div class="settings-row">
+                    <label>
+                        Chữ:
+                        <select id="setting-font-size">
+                            <option value="13px">Nhỏ</option>
+                            <option value="15px" selected>Vừa</option>
+                            <option value="18px">Lớn</option>
+                            <option value="22px">Rất lớn</option>
+                        </select>
+                    </label>
+                    <label>
+                        Giao diện:
+                        <select id="setting-theme">
+                            <option value="dark" selected>Mặc định</option>
+                            <option value="matrix">Ma trận</option>
+                        </select>
+                    </label>
+                    <label>
+                        Đổi Icon URL:
+                        <input type="text" id="acc-avatar-url" placeholder="Dán link ảnh đại diện mới...">
+                    </label>
+                </div>
+                
+                <!-- Thanh công cụ hành động Account -->
+                <div class="acc-actions">
+                    <button id="acc-btn-view" class="btn">📊 Xem dữ liệu</button>
+                    <button id="acc-btn-cache" class="btn">🧹 Xoá Cache</button>
+                    <button id="acc-btn-cookie" class="btn">🍪 Xoá Cook</button>
+                    <button id="acc-btn-logout" class="btn btn-logout">🚪 Đăng xuất</button>
+                </div>
             </div>
 
             <textarea id="code-input" placeholder="// Gõ 'hlep' để xem hướng dẫn hệ thống&#10;hlep&#10;var x = null&#10;kyac ceyk x"></textarea>
@@ -189,27 +220,86 @@
         const codeInput = document.getElementById('code-input');
         const consoleOutput = document.getElementById('console-output');
         const runBtn = document.getElementById('btn-run');
+        
         const settingFontSize = document.getElementById('setting-font-size');
         const settingTheme = document.getElementById('setting-theme');
+        const accAvatarUrl = document.getElementById('acc-avatar-url');
+        
+        const accBtnView = document.getElementById('acc-btn-view');
+        const accBtnCache = document.getElementById('acc-btn-cache');
+        const accBtnCookie = document.getElementById('acc-btn-cookie');
+        const accBtnLogout = document.getElementById('acc-btn-logout');
 
-        // BẢO VỆ TRANG CODE: Nếu chưa đăng nhập, đá ngay về login.html
+        let currentUserData = null;
+        let variables = {};
+
+        // KIỂM TRA ĐĂNG NHẬP CHỦ ĐỘNG
         onAuthStateChanged(auth, (user) => {
             if (user) {
+                currentUserData = user;
+                // Nếu có custom avatar trong localStorage thì dùng, không thì lấy từ Google
+                let savedAvatar = localStorage.getItem(`avatar_${user.uid}`) || user.photoURL;
                 authSection.innerHTML = `
                     <div class="user-panel">
-                        <img src="${user.photoURL}" alt="Avatar">
+                        <img id="user-display-img" src="${savedAvatar}" alt="Avatar">
                         <span>${user.displayName}</span>
-                        <button id="btn-logout" class="btn btn-logout">Đăng xuất</button>
                     </div>
                 `;
-                document.getElementById('btn-logout').addEventListener('click', () => {
-                    signOut(auth).then(() => { window.location.href = "login.html"; });
-                });
             } else {
-                window.location.href = "login.html";
+                let currentPath = window.location.pathname;
+                let newPath = currentPath.substring(0, currentPath.lastIndexOf('/')) + '/login.html';
+                window.location.href = newPath;
             }
         });
 
+        // 1. ĐỔI ICON (AVATAR)
+        accAvatarUrl.addEventListener('change', () => {
+            const url = accAvatarUrl.value.trim();
+            if (url && currentUserData) {
+                localStorage.setItem(`avatar_${currentUserData.uid}`, url);
+                const imgNode = document.getElementById('user-display-img');
+                if (imgNode) imgNode.src = url;
+                alert("Đã cập nhật biểu tượng tài khoản hệ thống!");
+            }
+        });
+
+        // 2. XEM DỮ LIỆU (VIEW DATA)
+        accBtnView.addEventListener('click', () => {
+            let varCount = Object.keys(variables).length;
+            let cacheKeys = Object.keys(localStorage).length;
+            alert(`=== THÔNG TIN DỮ LIỆU HỆ THỐNG ===\n• Tài khoản: ${currentUserData ? currentUserData.displayName : 'Chưa rõ'}\n• Số lượng biến đang chiếm RAM k+-: ${varCount}\n• Bản ghi cấu hình đang lưu trong Cache: ${cacheKeys}\n================================`);
+        });
+
+        // 3. XÓA CACHE (CLEAR CACHE)
+        accBtnCache.addEventListener('click', () => {
+            if (confirm("Bạn có chắc chắn muốn dọn sạch cấu hình giao diện, font chữ đã lưu?")) {
+                localStorage.clear();
+                alert("Đã làm sạch Cache! Vui lòng tải lại trang.");
+                window.location.reload();
+            }
+        });
+
+        // 4. XÓA COOKIES
+        accBtnCookie.addEventListener('click', () => {
+            if (confirm("Bạn có muốn dọn dẹp Cookies phiên làm việc hiện tại?")) {
+                const cookies = document.cookie.split(";");
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i];
+                    const eqPos = cookie.indexOf("=");
+                    const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+                    document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+                }
+                alert("Đã dọn sạch Cookies!");
+            }
+        });
+
+        // 5. ĐĂNG XUẤT (LOGOUT)
+        const triggerLogout = () => {
+            signOut(auth).then(() => { window.location.href = "login.html"; });
+        };
+        accBtnLogout.addEventListener('click', triggerLogout);
+
+        // CONFIG CHỮ VÀ THEME
         settingFontSize.addEventListener('change', () => {
             const size = settingFontSize.value;
             codeInput.style.fontSize = size;
@@ -224,8 +314,7 @@
             }
         });
 
-        let variables = {};
-
+        // LÕI TRÌNH THÔNG DỊCH K+-
         function tokenize(code, lineNum) {
             const tokens = [];
             let i = 0;
@@ -238,16 +327,10 @@
                 }
                 if (char === '"') {
                     let value = "";
-                    i++; 
-                    let closed = false;
+                    i++; let closed = false;
                     while (i < code.length) {
-                        if (code[i] === '"') {
-                            closed = true;
-                            i++;
-                            break;
-                        }
-                        value += code[i];
-                        i++;
+                        if (code[i] === '"') { closed = true; i++; break; }
+                        value += code[i]; i++;
                     }
                     if (!closed) throw new Error(`Syntax Error (Dòng ${lineNum}): Chuỗi ký tự không được đóng ngoặc kép.`);
                     tokens.push({ type: 'STRING', value: value });
@@ -369,61 +452,4 @@
             consoleOutput.textContent += `-------------------------------------------\n`;
             variables = {}; 
             const lines = code.split('\n');
-            let hasError = false;
-
-            for (let i = 0; i < lines.length; i++) {
-                let lineText = lines[i].trim();
-                if (lineText === "" || lineText.startsWith("//")) continue;
-
-                try {
-                    const tokens = tokenize(lineText, i + 1);
-                    if (tokens.length === 0) continue;
-
-                    if (tokens[0].type === 'KEYWORD' && tokens[0].value === 'hlep') {
-                        consoleOutput.textContent += `=== HƯỚNG DẪN CÚ PHÁP k+- ===\n1. Khai báo biến: var [tên] = [giá trị / biểu thức]\n2. Xuất dữ liệu:  kyac ceyk [biến / chuỗi / biểu thức]\n3. Hệ thống cứu hộ: hlep\n4. Kiểu dữ liệu hỗ trợ: Số, Chuỗi, true, false, null\n5. Toán tử: +, -, *, /, ==, !=, >, <, ( )\n=====================================\n`;
-                        continue;
-                    }
-
-                    if (tokens[0].type === 'IDENTIFIER' && tokens[0].value === 'kyca') throw new Error(`Syntax Error (Dòng ${i+1}): Không tìm thấy lệnh "kyca". Có phải ý bạn là "kyac"?`);
-
-                    if (tokens[0].type === 'KEYWORD' && tokens[0].value === 'kyac') {
-                        if (!tokens[1] || tokens[1].value !== 'ceyk') throw new Error(`Syntax Error (Dòng ${i+1}): Thiếu thành phần điều hướng "ceyk" đứng sau "kyac".`);
-                        let remaining = tokens.slice(2);
-                        if (remaining.length === 0) throw new Error(`Syntax Error (Dòng ${i+1}): Trống dữ liệu đầu vào.`);
-                        if (remaining.length === 1 && remaining[0].type === 'STRING') {
-                            consoleOutput.textContent += remaining[0].value + "\n";
-                        } else {
-                            let res = evaluateLowLevelExpression(remaining, i + 1);
-                            consoleOutput.textContent += (res === null ? "null" : res.toString()) + "\n";
-                        }
-                        continue;
-                    }
-
-                    if (tokens[0].type === 'KEYWORD' && tokens[0].value === 'var') {
-                        let varNameToken = tokens[1];
-                        if (!varNameToken || varNameToken.type !== 'IDENTIFIER') throw new Error(`Syntax Error (Dòng ${i+1}): Yêu cầu tên biến hợp lệ sau 'var'.`);
-                        if (!tokens[2] || tokens[2].value !== '=') throw new Error(`Syntax Error (Dòng ${i+1}): Thiếu toán tử gán '='.`);
-                        let exprTokens = tokens.slice(3);
-                        if (exprTokens.length === 0) throw new Error(`Syntax Error (Dòng ${i+1}): Biến trống giá trị.`);
-                        if (exprTokens.length === 1 && exprTokens[0].type === 'STRING') {
-                            variables[varNameToken.value] = exprTokens[0].value;
-                        } else {
-                            variables[varNameToken.value] = evaluateLowLevelExpression(exprTokens, i + 1);
-                        }
-                        continue;
-                    }
-                    throw new Error(`Syntax Error (Dòng ${i+1}): Cấu trúc mã nguồn không xác định.`);
-                } catch (err) {
-                    consoleOutput.textContent += `❌ ${err.message}\n`;
-                    hasError = true;
-                    break;
-                }
-            }
-            if (!hasError) {
-                consoleOutput.textContent += `-------------------------------------------\n[Trạng thái]: Tiến trình Core hoàn tất thành công.`;
-            }
-        });
-    </script>
-</body>
-    </html>
-                            
+            let hasError
